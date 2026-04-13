@@ -255,11 +255,11 @@
             const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
             
             if (type === 'ssq') {
-                title.mainTitle = `${month}月${date}日 ${weekDays[dayOfWeek]} 双色球号码`;
+                mainTitle.textContent = `${month}月${date}日 ${weekDays[dayOfWeek]} 双色球号码`;
                 pageTitle.textContent = `${month}月${date}日 ${weekDays[dayOfWeek]} 双色球号码`;
                 subtitle.textContent = '6 个红球 + 1 个蓝球';
             } else if (type === 'dlt') {
-                title.mainTitle = `${month}月${date}日 ${weekDays[dayOfWeek]} 大乐透号码`;
+                mainTitle.textContent = `${month}月${date}日 ${weekDays[dayOfWeek]} 大乐透号码`;
                 pageTitle.textContent = `${month}月${date}日 ${weekDays[dayOfWeek]} 大乐透号码`;
                 subtitle.textContent = '5 个前区 + 2 个后区';
             } else {
