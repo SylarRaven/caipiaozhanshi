@@ -32,6 +32,12 @@
             color: #333;
             margin-bottom: 10px;
             font-size: 24px;
+            cursor: pointer; /* 鼠标悬浮变成小手，表示可点击 */
+            transition: transform 0.2s;
+        }
+
+        h1:hover {
+            transform: scale(1.03);
         }
 
         .subtitle {
@@ -135,6 +141,28 @@
             margin-bottom: 20px;
         }
 
+        /* 复制成功提示样式 */
+        .copy-toast {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            z-index: 9999;
+            animation: fadeInOut 1.5s ease;
+        }
+
+        @keyframes fadeInOut {
+            0% { opacity: 0; }
+            20% { opacity: 1; }
+            80% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
         @keyframes popIn {
             0% {
                 transform: scale(0);
@@ -177,11 +205,12 @@
             <p class="subtitle" id="subtitle"></p>
             <div id="numbersContainer"></div>
         </div>
-        
-        <!-- <div class="time-info" id="timeInfo"></div> -->
     </div>
 
     <script>
+        // 全局存储解析后的号码数据，方便复制使用
+        let globalNumbers = null;
+
         function parseNumbers() {
             const params = new URLSearchParams(window.location.search);
             const type = params.get('type');
@@ -195,7 +224,9 @@
             const groups = data.split('|');
             const numbers = groups.map(group => group.split(',').map(n => parseInt(n)));
 
-            return { type, numbers };
+            // 存储到全局变量
+            globalNumbers = { type, numbers };
+            return globalNumbers;
         }
 
         function renderNumbers() {
@@ -207,7 +238,6 @@
             const pageTitle = document.getElementById('pageTitle');
             const subtitle = document.getElementById('subtitle');
             const container = document.getElementById('numbersContainer');
-            const timeInfo = document.getElementById('timeInfo');
 
             const now = new Date();
             const month = now.getMonth() + 1;
@@ -219,7 +249,7 @@
             const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
             
             if (type === 'ssq') {
-                pageTitle.textContent = '🎱 双色球号码';
+                pageTitle.textContent = `${month}月${date}日 ${weekDays[dayOfWeek]} 双色球号码`;
                 subtitle.textContent = '6 个红球 + 1 个蓝球';
             } else if (type === 'dlt') {
                 pageTitle.textContent = `${month}月${date}日 ${weekDays[dayOfWeek]} 大乐透号码`;
@@ -229,11 +259,8 @@
                 return;
             }
 
-            // timeInfo.innerHTML = `
-            //     <div class="month">${month}月</div>
-            //     <div class="date">${date}日 ${weekDays[dayOfWeek]}</div>
-            //     <div class="time">${hours}:${minutes}</div>
-            // `;
+            // 给标题添加点击复制事件
+            pageTitle.onclick = copyAllNumbers;
 
             container.innerHTML = '';
 
@@ -264,7 +291,6 @@
                     blueBall.style.animationDelay = `${6 * 0.1}s`;
                     numbersContainer.appendChild(blueBall);
                 } else {
-                    // 大乐透：前5个红球
                     for (let i = 0; i < 5; i++) {
                         const ball = createBall(group[i], 'red');
                         ball.style.animationDelay = `${i * 0.1}s`;
@@ -275,7 +301,6 @@
                     separator.className = 'separator';
                     numbersContainer.appendChild(separator);
                     
-                    // 后2个蓝球
                     for (let i = 5; i < 7; i++) {
                         const ball = createBall(group[i], 'blue');
                         ball.style.animationDelay = `${i * 0.1}s`;
@@ -286,6 +311,46 @@
                 groupDiv.appendChild(numbersContainer);
                 container.appendChild(groupDiv);
             });
+        }
+
+        // 复制所有号码到剪贴板（一行一组）
+        function copyAllNumbers() {
+            if (!globalNumbers || !globalNumbers.numbers) {
+                showToast('暂无号码可复制');
+                return;
+            }
+
+            // 拼接文本：一行一组
+            let copyText = '';
+            globalNumbers.numbers.forEach(group => {
+                // 格式：01 02 03 04 05 06 07
+                const line = group.map(num => num.toString().padStart(2, '0')).join(' ');
+                copyText += line + '\n';
+            });
+
+            // 去除最后多余的换行
+            copyText = copyText.trim();
+
+            // 执行复制
+            navigator.clipboard.writeText(copyText).then(() => {
+                showToast('✅ 已复制全部号码到剪贴板');
+            }).catch(err => {
+                showToast('❌ 复制失败，请重试');
+                console.error('复制失败：', err);
+            });
+        }
+
+        // 显示提示框
+        function showToast(msg) {
+            const toast = document.createElement('div');
+            toast.className = 'copy-toast';
+            toast.textContent = msg;
+            document.body.appendChild(toast);
+
+            // 1.5秒后自动移除
+            setTimeout(() => {
+                document.body.removeChild(toast);
+            }, 1500);
         }
 
         function createBall(number, type) {
