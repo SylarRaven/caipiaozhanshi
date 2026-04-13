@@ -57,17 +57,20 @@
             text-align: center;
         }
 
+        /* 🔥 修复 1：强制不换行 */
         .numbers-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
+            flex-wrap: nowrap; /* 关键！不换行 */
+            gap: 8px;
+            width: 100%;
         }
 
+        /* 🔥 修复 2：正常球大小 */
         .number-ball {
-            width: 20px;
-            height: 20px;
+            width: 42px;
+            height: 42px;
             border-radius: 50%;
             display: flex;
             align-items: center;
@@ -77,6 +80,7 @@
             color: white;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
             animation: popIn 0.5s ease;
+            flex-shrink: 0; /* 不让球被压缩 */
         }
 
         .number-ball.red {
@@ -89,9 +93,9 @@
 
         .separator {
             width: 2px;
-            height: 40px;
+            height: 35px;
             background: #ddd;
-            margin: 0 10px;
+            margin: 0 8px;
         }
 
         .time-info {
@@ -157,8 +161,8 @@
             }
 
             .number-ball {
-                width: 45px;
-                height: 45px;
+                width: 40px;
+                height: 40px;
                 font-size: 18px;
             }
 
