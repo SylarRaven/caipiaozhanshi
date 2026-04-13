@@ -211,6 +211,16 @@
             const container = document.getElementById('numbersContainer');
             const timeInfo = document.getElementById('timeInfo');
 
+
+
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            const dayOfWeek = now.getDay();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
             if (type === 'ssq') {
                 pageTitle.textContent = '🎱 双色球号码';
                 subtitle.textContent = '6 个红球 + 1 个蓝球';
@@ -221,21 +231,11 @@
                 showError('未知的彩票类型');
                 return;
             }
-
-            const now = new Date();
-            const month = now.getMonth() + 1;
-            const date = now.getDate();
-            const dayOfWeek = now.getDay();
-            const hours = now.getHours().toString().padStart(2, '0');
-            const minutes = now.getMinutes().toString().padStart(2, '0');
-            
-            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
-            
-            timeInfo.innerHTML = `
-                <div class="month">${month}月</div>
-                <div class="date">${date}日 ${weekDays[dayOfWeek]}</div>
-                <div class="time">${hours}:${minutes}</div>
-            `;
+            // timeInfo.innerHTML = `
+            //     <div class="month">${month}月</div>
+            //     <div class="date">${date}日 ${weekDays[dayOfWeek]}</div>
+            //     <div class="time">${hours}:${minutes}</div>
+            // `;
 
             container.innerHTML = '';
 
