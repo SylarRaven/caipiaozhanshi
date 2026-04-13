@@ -57,17 +57,16 @@
             text-align: center;
         }
 
-        /* 🔥 修复 1：强制不换行 */
+        /* 修复：强制不换行 */
         .numbers-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-wrap: nowrap; /* 关键！不换行 */
+            flex-wrap: nowrap;
             gap: 8px;
             width: 100%;
         }
 
-        /* 🔥 修复 2：正常球大小 */
         .number-ball {
             width: 42px;
             height: 42px;
@@ -80,7 +79,7 @@
             color: white;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
             animation: popIn 0.5s ease;
-            flex-shrink: 0; /* 不让球被压缩 */
+            flex-shrink: 0;
         }
 
         .number-ball.red {
@@ -98,30 +97,26 @@
             margin: 0 8px;
         }
 
+        /* 🔥 时间模块改成一行显示 */
         .time-info {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
+            padding: 15px 20px;
             border-radius: 10px;
             margin-top: 20px;
-            text-align: center;
             box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+            /* 核心：flex 一行布局 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: nowrap;
         }
 
-        .time-info .month {
-            font-size: 18px;
-            font-weight: 600;
-            margin-bottom: 10px;
-        }
-
-        .time-info .date {
+        .time-info .time-item {
             font-size: 16px;
-            margin-bottom: 8px;
-        }
-
-        .time-info .time {
-            font-size: 14px;
-            opacity: 0.9;
+            font-weight: 600;
+            white-space: nowrap;
         }
 
         .error-container {
@@ -168,6 +163,12 @@
 
             .number-group {
                 padding: 15px;
+            }
+
+            /* 手机端时间字体适配 */
+            .time-info .time-item {
+                font-size: 14px;
+                gap: 12px;
             }
         }
     </style>
@@ -216,6 +217,7 @@
                 subtitle.textContent = '6 个红球 + 1 个蓝球';
             } else if (type === 'dlt') {
                 pageTitle.textContent = '🎰 大乐透号码';
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
                 subtitle.textContent = '5 个前区 + 2 个后区';
             } else {
                 showError('未知的彩票类型');
@@ -231,10 +233,10 @@
             
             const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
             
+            // 🔥 改成一行显示的 HTML
             timeInfo.innerHTML = `
-                <div class="month">${month}月</div>
-                <div class="date">${date}日 ${weekDays[dayOfWeek]}</div>
-                <div class="time">${hours}:${minutes}</div>
+                <span class="time-item">${month}月${date}日 ${weekDays[dayOfWeek]}</span>
+                <span class="time-item">${hours}:${minutes}</span>
             `;
 
             container.innerHTML = '';
