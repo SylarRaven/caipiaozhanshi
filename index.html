@@ -67,56 +67,38 @@
             margin-bottom: 30px;
         }
 
-        .group-title {
-            color: #555;
+        /* 长条输入框样式 */
+        .group-item {
+            margin-bottom: 18px;
+        }
+
+        .group-label {
             font-size: 14px;
-            margin-bottom: 10px;
             font-weight: 600;
-        }
-
-        .number-input-group {
-            background: #f8f9fa;
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 15px;
-        }
-
-        .number-input-group h3 {
             color: #667eea;
-            font-size: 14px;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
+            display: block;
         }
 
-        .number-inputs {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-
-        .number-input {
-            width: 45px;
-            height: 45px;
+        .group-input {
+            width: 100%;
+            padding: 14px 16px;
             border: 2px solid #e0e0e0;
-            border-radius: 50%;
-            text-align: center;
+            border-radius: 10px;
             font-size: 16px;
-            font-weight: 600;
             outline: none;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
         }
 
-        .number-input:focus {
+        .group-input:focus {
             border-color: #667eea;
-            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
         }
 
-        .number-input.blue {
-            border-color: #4a90e2;
-        }
-
-        .number-input.blue:focus {
-            border-color: #4a90e2;
-            box-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+        .tip {
+            font-size: 12px;
+            color: #888;
+            margin-top: 5px;
         }
 
         .submit-btn {
@@ -138,10 +120,6 @@
             box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
         }
 
-        .submit-btn:active {
-            transform: translateY(0);
-        }
-
         .error-message {
             background: #fee;
             color: #c33;
@@ -150,22 +128,6 @@
             margin-bottom: 20px;
             text-align: center;
             display: none;
-        }
-
-        @media (max-width: 480px) {
-            .container {
-                padding: 20px 15px;
-            }
-
-            h1 {
-                font-size: 20px;
-            }
-
-            .number-input {
-                width: 40px;
-                height: 40px;
-                font-size: 14px;
-            }
         }
     </style>
 </head>
@@ -189,48 +151,27 @@
     <script>
         let currentLotteryType = 'ssq';
 
+        // 渲染 5 个长条输入框
         function renderNumberInputs() {
             const container = document.getElementById('numberGroups');
             container.innerHTML = '';
 
-            for (let i = 1; i <= 5; i++) {
-                const groupDiv = document.createElement('div');
-                groupDiv.className = 'number-input-group';
-                
-                let inputsHtml = '';
-                if (currentLotteryType === 'ssq') {
-                    inputsHtml = `
-                        <h3>第 ${i} 组 - 双色球 (6 红 + 1 蓝)</h3>
-                        <div class="number-inputs">
-                            ${Array(6).fill(0).map((_, j) => 
-                                `<input type="number" class="number-input red" 
-                                    id="ssq-g${i}-r${j}" min="1" max="33" placeholder="红${j+1}">`
-                            ).join('')}
-                            <input type="number" class="number-input blue" 
-                                id="ssq-g${i}-b0" min="1" max="16" placeholder="蓝">
-                        </div>
-                    `;
-                } else {
-                    inputsHtml = `
-                        <h3>第 ${i} 组 - 大乐透 (5 前 + 2 后)</h3>
-                        <div class="number-inputs">
-                            ${Array(5).fill(0).map((_, j) => 
-                                `<input type="number" class="number-input red" 
-                                    id="dlt-g${i}-f${j}" min="1" max="35" placeholder="前${j+1}">`
-                            ).join('')}
-                            <input type="number" class="number-input blue" 
-                                id="dlt-g${i}-b0" min="1" max="12" placeholder="后 1">
-                            <input type="number" class="number-input blue" 
-                                id="dlt-g${i}-b1" min="1" max="12" placeholder="后 2">
-                        </div>
-                    `;
-                }
+            let tipText = currentLotteryType === 'ssq' 
+                ? '格式：6 红 + 1 蓝，用空格、逗号、斜杠分隔' 
+                : '格式：5 前 + 2 后，用空格、逗号、斜杠分隔';
 
-                groupDiv.innerHTML = inputsHtml;
-                container.appendChild(groupDiv);
+            for (let i = 1; i <= 5; i++) {
+                const html = `
+                    <div class="group-item">
+                        <label class="group-label">第 ${i} 组</label>
+                        <input type="text" class="group-input" id="group-${i}" placeholder="${tipText}">
+                    </div>
+                `;
+                container.innerHTML += html;
             }
         }
 
+        // 切换彩票类型
         document.querySelectorAll('.lottery-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 document.querySelectorAll('.lottery-btn').forEach(b => b.classList.remove('active'));
@@ -240,50 +181,66 @@
             });
         });
 
+        // 智能分割号码（支持空格 / 逗号 / 斜杠）
+        function splitNumbers(str) {
+            return str.trim()
+                .replace(/[,\s\/\-、]+/g, ',')  // 统一转成逗号
+                .split(',')
+                .filter(n => n)
+                .map(n => parseInt(n))
+                .filter(n => !isNaN(n));
+        }
+
+        // 生成页面
         function generatePage() {
             const errorMessage = document.getElementById('errorMessage');
             errorMessage.style.display = 'none';
 
             const numbers = [];
-            
+            const requiredCount = currentLotteryType === 'ssq' ? 7 : 7; // 都是 7 个
+
             for (let i = 1; i <= 5; i++) {
-                let groupNumbers = [];
-                
+                const val = document.getElementById(`group-${i}`).value.trim();
+                if (!val) {
+                    showError(`第 ${i} 组不能为空`);
+                    return;
+                }
+
+                const nums = splitNumbers(val);
+
+                if (nums.length !== requiredCount) {
+                    showError(`第 ${i} 组必须输入 ${requiredCount} 个号码`);
+                    return;
+                }
+
+                // 验证范围
                 if (currentLotteryType === 'ssq') {
                     for (let j = 0; j < 6; j++) {
-                        const input = document.getElementById(`ssq-g${i}-r${j}`);
-                        if (!input.value || input.value < 1 || input.value > 33) {
-                            showError(`第 ${i} 组第 ${j + 1} 个红球号码无效 (1-33)`);
+                        if (nums[j] < 1 || nums[j] > 33) {
+                            showError(`第 ${i} 组红球必须在 1-33 之间`);
                             return;
                         }
-                        groupNumbers.push(parseInt(input.value));
                     }
-                    const blueInput = document.getElementById(`ssq-g${i}-b0`);
-                    if (!blueInput.value || blueInput.value < 1 || blueInput.value > 16) {
-                        showError(`第 ${i} 组蓝球号码无效 (1-16)`);
+                    if (nums[6] < 1 || nums[6] > 16) {
+                        showError(`第 ${i} 组蓝球必须在 1-16 之间`);
                         return;
                     }
-                    groupNumbers.push(parseInt(blueInput.value));
                 } else {
                     for (let j = 0; j < 5; j++) {
-                        const input = document.getElementById(`dlt-g${i}-f${j}`);
-                        if (!input.value || input.value < 1 || input.value > 35) {
-                            showError(`第 ${i} 组第 ${j + 1} 个前区号码无效 (1-35)`);
+                        if (nums[j] < 1 || nums[j] > 35) {
+                            showError(`第 ${i} 组前区必须在 1-35 之间`);
                             return;
                         }
-                        groupNumbers.push(parseInt(input.value));
                     }
-                    for (let j = 0; j < 2; j++) {
-                        const input = document.getElementById(`dlt-g${i}-b${j}`);
-                        if (!input.value || input.value < 1 || input.value > 12) {
-                            showError(`第 ${i} 组后区号码 ${j + 1} 无效 (1-12)`);
+                    for (let j = 5; j < 7; j++) {
+                        if (nums[j] < 1 || nums[j] > 12) {
+                            showError(`第 ${i} 组后区必须在 1-12 之间`);
                             return;
                         }
-                        groupNumbers.push(parseInt(input.value));
                     }
                 }
-                
-                numbers.push(groupNumbers.join(','));
+
+                numbers.push(nums.join(','));
             }
 
             const url = `show.html?type=${currentLotteryType}&data=${encodeURIComponent(numbers.join('|'))}`;
