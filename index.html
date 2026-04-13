@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>彩票号码管理</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 24px;
+        }
+
+        .lottery-type {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+
+        .lottery-btn {
+            flex: 1;
+            padding: 15px;
+            border: 2px solid #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .lottery-btn.active {
+            background: #667eea;
+            color: white;
+        }
+
+        .lottery-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .number-groups {
+            margin-bottom: 30px;
+        }
+
+        .group-title {
+            color: #555;
+            font-size: 14px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+
+        .number-input-group {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .number-input-group h3 {
+            color: #667eea;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+
+        .number-inputs {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .number-input {
+            width: 45px;
+            height: 45px;
+            border: 2px solid #e0e0e0;
+            border-radius: 50%;
+            text-align: center;
+            font-size: 16px;
+            font-weight: 600;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .number-input:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.3);
+        }
+
+        .number-input.blue {
+            border-color: #4a90e2;
+        }
+
+        .number-input.blue:focus {
+            border-color: #4a90e2;
+            box-shadow: 0 0 10px rgba(74, 144, 226, 0.3);
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .submit-btn:active {
+            transform: translateY(0);
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            text-align: center;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .number-input {
+                width: 40px;
+                height: 40px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 彩票号码管理</h1>
+        
+        <div class="error-message" id="errorMessage"></div>
+
+        <div class="lottery-type">
+            <button class="lottery-btn active" data-type="ssq">双色球</button>
+            <button class="lottery-btn" data-type="dlt">大乐透</button>
+        </div>
+
+        <div class="number-groups" id="numberGroups">
+        </div>
+
+        <button class="submit-btn" onclick="generatePage()">生成展示页面</button>
+    </div>
+
+    <script>
+        let currentLotteryType = 'ssq';
+
+        function renderNumberInputs() {
+            const container = document.getElementById('numberGroups');
+            container.innerHTML = '';
+
+            for (let i = 1; i <= 5; i++) {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'number-input-group';
+                
+                let inputsHtml = '';
+                if (currentLotteryType === 'ssq') {
+                    inputsHtml = `
+                        <h3>第 ${i} 组 - 双色球 (6 红 + 1 蓝)</h3>
+                        <div class="number-inputs">
+                            ${Array(6).fill(0).map((_, j) => 
+                                `<input type="number" class="number-input red" 
+                                    id="ssq-g${i}-r${j}" min="1" max="33" placeholder="红${j+1}">`
+                            ).join('')}
+                            <input type="number" class="number-input blue" 
+                                id="ssq-g${i}-b0" min="1" max="16" placeholder="蓝">
+                        </div>
+                    `;
+                } else {
+                    inputsHtml = `
+                        <h3>第 ${i} 组 - 大乐透 (5 前 + 2 后)</h3>
+                        <div class="number-inputs">
+                            ${Array(5).fill(0).map((_, j) => 
+                                `<input type="number" class="number-input red" 
+                                    id="dlt-g${i}-f${j}" min="1" max="35" placeholder="前${j+1}">`
+                            ).join('')}
+                            <input type="number" class="number-input blue" 
+                                id="dlt-g${i}-b0" min="1" max="12" placeholder="后 1">
+                            <input type="number" class="number-input blue" 
+                                id="dlt-g${i}-b1" min="1" max="12" placeholder="后 2">
+                        </div>
+                    `;
+                }
+
+                groupDiv.innerHTML = inputsHtml;
+                container.appendChild(groupDiv);
+            }
+        }
+
+        document.querySelectorAll('.lottery-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.lottery-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                currentLotteryType = this.dataset.type;
+                renderNumberInputs();
+            });
+        });
+
+        function generatePage() {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.style.display = 'none';
+
+            const numbers = [];
+            
+            for (let i = 1; i <= 5; i++) {
+                let groupNumbers = [];
+                
+                if (currentLotteryType === 'ssq') {
+                    for (let j = 0; j < 6; j++) {
+                        const input = document.getElementById(`ssq-g${i}-r${j}`);
+                        if (!input.value || input.value < 1 || input.value > 33) {
+                            showError(`第 ${i} 组第 ${j + 1} 个红球号码无效 (1-33)`);
+                            return;
+                        }
+                        groupNumbers.push(parseInt(input.value));
+                    }
+                    const blueInput = document.getElementById(`ssq-g${i}-b0`);
+                    if (!blueInput.value || blueInput.value < 1 || blueInput.value > 16) {
+                        showError(`第 ${i} 组蓝球号码无效 (1-16)`);
+                        return;
+                    }
+                    groupNumbers.push(parseInt(blueInput.value));
+                } else {
+                    for (let j = 0; j < 5; j++) {
+                        const input = document.getElementById(`dlt-g${i}-f${j}`);
+                        if (!input.value || input.value < 1 || input.value > 35) {
+                            showError(`第 ${i} 组第 ${j + 1} 个前区号码无效 (1-35)`);
+                            return;
+                        }
+                        groupNumbers.push(parseInt(input.value));
+                    }
+                    for (let j = 0; j < 2; j++) {
+                        const input = document.getElementById(`dlt-g${i}-b${j}`);
+                        if (!input.value || input.value < 1 || input.value > 12) {
+                            showError(`第 ${i} 组后区号码 ${j + 1} 无效 (1-12)`);
+                            return;
+                        }
+                        groupNumbers.push(parseInt(input.value));
+                    }
+                }
+                
+                numbers.push(groupNumbers.join(','));
+            }
+
+            const url = `show.html?type=${currentLotteryType}&data=${encodeURIComponent(numbers.join('|'))}`;
+            window.location.href = url;
+        }
+
+        function showError(message) {
+            const errorMessage = document.getElementById('errorMessage');
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+        }
+
+        renderNumberInputs();
+    </script>
+</body>
+</html>

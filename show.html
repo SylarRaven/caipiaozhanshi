@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>号码展示</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            padding: 30px 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 24px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .number-group {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .group-title {
+            color: #667eea;
+            font-size: 16px;
+            font-weight: 600;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .numbers-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .number-ball {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 700;
+            color: white;
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+            animation: popIn 0.5s ease;
+        }
+
+        .number-ball.red {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .number-ball.blue {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .separator {
+            width: 2px;
+            height: 40px;
+            background: #ddd;
+            margin: 0 10px;
+        }
+
+        .time-info {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 20px;
+            text-align: center;
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .time-info .month {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .time-info .date {
+            font-size: 16px;
+            margin-bottom: 8px;
+        }
+
+        .time-info .time {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .error-container {
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .error-message {
+            background: #fee;
+            color: #c33;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        @keyframes popIn {
+            0% {
+                transform: scale(0);
+                opacity: 0;
+            }
+            50% {
+                transform: scale(1.1);
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px 15px;
+            }
+
+            h1 {
+                font-size: 20px;
+            }
+
+            .number-ball {
+                width: 45px;
+                height: 45px;
+                font-size: 18px;
+            }
+
+            .number-group {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="content">
+            <h1 id="pageTitle">号码展示</h1>
+            <p class="subtitle" id="subtitle"></p>
+            <div id="numbersContainer"></div>
+        </div>
+        
+        <div class="time-info" id="timeInfo"></div>
+    </div>
+
+    <script>
+        function parseNumbers() {
+            const params = new URLSearchParams(window.location.search);
+            const type = params.get('type');
+            const data = params.get('data');
+
+            if (!type || !data) {
+                showError('无效的 URL 参数');
+                return null;
+            }
+
+            const groups = data.split('|');
+            const numbers = groups.map(group => group.split(',').map(n => parseInt(n)));
+
+            return { type, numbers };
+        }
+
+        function renderNumbers() {
+            const result = parseNumbers();
+            
+            if (!result) return;
+
+            const { type, numbers } = result;
+            const pageTitle = document.getElementById('pageTitle');
+            const subtitle = document.getElementById('subtitle');
+            const container = document.getElementById('numbersContainer');
+            const timeInfo = document.getElementById('timeInfo');
+
+            if (type === 'ssq') {
+                pageTitle.textContent = '🎱 双色球号码';
+                subtitle.textContent = '6 个红球 + 1 个蓝球';
+            } else if (type === 'dlt') {
+                pageTitle.textContent = '🎰 大乐透号码';
+                subtitle.textContent = '5 个前区 + 2 个后区';
+            } else {
+                showError('未知的彩票类型');
+                return;
+            }
+
+            const now = new Date();
+            const month = now.getMonth() + 1;
+            const date = now.getDate();
+            const dayOfWeek = now.getDay();
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            
+            const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            
+            timeInfo.innerHTML = `
+                <div class="month">${month}月</div>
+                <div class="date">${date}日 ${weekDays[dayOfWeek]}</div>
+                <div class="time">${hours}:${minutes}</div>
+            `;
+
+            container.innerHTML = '';
+
+            numbers.forEach((group, index) => {
+                const groupDiv = document.createElement('div');
+                groupDiv.className = 'number-group';
+                
+                const title = document.createElement('div');
+                title.className = 'group-title';
+                title.textContent = `第 ${index + 1} 组`;
+                groupDiv.appendChild(title);
+
+                const numbersContainer = document.createElement('div');
+                numbersContainer.className = 'numbers-container';
+
+                if (type === 'ssq') {
+                    for (let i = 0; i < 6; i++) {
+                        const ball = createBall(group[i], 'red');
+                        ball.style.animationDelay = `${i * 0.1}s`;
+                        numbersContainer.appendChild(ball);
+                    }
+                    
+                    const separator = document.createElement('div');
+                    separator.className = 'separator';
+                    numbersContainer.appendChild(separator);
+                    
+                    const blueBall = createBall(group[6], 'blue');
+                    blueBall.style.animationDelay = `${6 * 0.1}s`;
+                    numbersContainer.appendChild(blueBall);
+                } else {
+                    for (let i = 0; i < 5; i++) {
+                        const ball = createBall(group[i], 'red');
+                        ball.style.animationDelay = `${i * 0.1}s`;
+                        numbersContainer.appendChild(ball);
+                    }
+                    
+                    const separator = document.createElement('div');
+                    separator.className = 'separator';
+                    numbersContainer.appendChild(separator);
+                    
+                    for (let i = 5; i < 7; i++) {
+                        const ball = createBall(group[i], 'blue');
+                        ball.style.animationDelay = `${i * 0.1}s`;
+                        numbersContainer.appendChild(ball);
+                    }
+                }
+
+                groupDiv.appendChild(numbersContainer);
+                container.appendChild(groupDiv);
+            });
+        }
+
+        function createBall(number, type) {
+            const ball = document.createElement('div');
+            ball.className = `number-ball ${type}`;
+            ball.textContent = number.toString().padStart(2, '0');
+            return ball;
+        }
+
+        function showError(message) {
+            const content = document.getElementById('content');
+            content.innerHTML = `
+                <div class="error-container">
+                    <div class="error-message">${message}</div>
+                </div>
+            `;
+        }
+
+        renderNumbers();
+    </script>
+</body>
+</html>
