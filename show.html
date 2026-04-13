@@ -57,17 +57,15 @@
             text-align: center;
         }
 
-        /* 🔥 修复 1：强制不换行 */
         .numbers-container {
             display: flex;
             justify-content: center;
             align-items: center;
-            flex-wrap: nowrap; /* 关键！不换行 */
+            flex-wrap: nowrap;
             gap: 8px;
             width: 100%;
         }
 
-        /* 🔥 修复 2：正常球大小 */
         .number-ball {
             width: 42px;
             height: 42px;
@@ -80,7 +78,7 @@
             color: white;
             box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
             animation: popIn 0.5s ease;
-            flex-shrink: 0; /* 不让球被压缩 */
+            flex-shrink: 0;
         }
 
         .number-ball.red {
@@ -211,8 +209,6 @@
             const container = document.getElementById('numbersContainer');
             const timeInfo = document.getElementById('timeInfo');
 
-
-
             const now = new Date();
             const month = now.getMonth() + 1;
             const date = now.getDate();
@@ -221,21 +217,23 @@
             const minutes = now.getMinutes().toString().padStart(2, '0');
             
             const weekDays = ['星期日', '星期一', '星期二', '星期三', '星期四', '星期五', '星期六'];
+            
             if (type === 'ssq') {
                 pageTitle.textContent = '🎱 双色球号码';
                 subtitle.textContent = '6 个红球 + 1 个蓝球';
             } else if (type === 'dlt') {
-                pageTitle.textContent = `${month}月${date}日 ${weekDays[dayOfWeek]}大乐透号码`;
+                pageTitle.textContent = `${month}月${date}日 ${weekDays[dayOfWeek]} 大乐透号码`;
                 subtitle.textContent = '5 个前区 + 2 个后区';
             } else {
                 showError('未知的彩票类型');
                 return;
             }
-            // timeInfo.innerHTML = `
-            //     <div class="month">${month}月</div>
-            //     <div class="date">${date}日 ${weekDays[dayOfWeek]}</div>
-            //     <div class="time">${hours}:${minutes}</div>
-            // `;
+
+            timeInfo.innerHTML = `
+                <div class="month">${month}月</div>
+                <div class="date">${date}日 ${weekDays[dayOfWeek]}</div>
+                <div class="time">${hours}:${minutes}</div>
+            `;
 
             container.innerHTML = '';
 
@@ -266,6 +264,7 @@
                     blueBall.style.animationDelay = `${6 * 0.1}s`;
                     numbersContainer.appendChild(blueBall);
                 } else {
+                    // 大乐透：前5个红球
                     for (let i = 0; i < 5; i++) {
                         const ball = createBall(group[i], 'red');
                         ball.style.animationDelay = `${i * 0.1}s`;
@@ -276,6 +275,7 @@
                     separator.className = 'separator';
                     numbersContainer.appendChild(separator);
                     
+                    // 后2个蓝球
                     for (let i = 5; i < 7; i++) {
                         const ball = createBall(group[i], 'blue');
                         ball.style.animationDelay = `${i * 0.1}s`;
