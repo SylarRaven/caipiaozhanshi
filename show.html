@@ -215,7 +215,7 @@
                 pageTitle.textContent = '🎱 双色球号码';
                 subtitle.textContent = '6 个红球 + 1 个蓝球';
             } else if (type === 'dlt') {
-                pageTitle.textContent = '🎰 大乐透号码';
+                pageTitle.textContent = '🎰 ${month}月${date}日 ${weekDays[dayOfWeek]}大乐透号码';
                 subtitle.textContent = '5 个前区 + 2 个后区';
             } else {
                 showError('未知的彩票类型');
