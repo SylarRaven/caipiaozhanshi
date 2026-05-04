@@ -64,12 +64,18 @@
         }
 
         .number-groups {
-            margin-bottom: 30px;
+            margin-bottom: 20px;
         }
 
-        /* 长条输入框样式 */
         .group-item {
             margin-bottom: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .group-item-inner {
+            flex: 1;
         }
 
         .group-label {
@@ -95,10 +101,60 @@
             box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.15);
         }
 
-        .tip {
+        /* 删除按钮 */
+        .delete-btn {
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            border: 2px solid #f5576c;
+            background: white;
+            color: #f5576c;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            margin-top: 22px; /* 对齐 input */
+        }
+
+        .delete-btn:hover {
+            background: #f5576c;
+            color: white;
+        }
+
+        /* 添加组按钮 */
+        .add-group-btn {
+            width: 100%;
+            padding: 13px;
+            border: 2px dashed #667eea;
+            background: white;
+            color: #667eea;
+            border-radius: 10px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-bottom: 20px;
+        }
+
+        .add-group-btn:hover:not(:disabled) {
+            background: rgba(102, 126, 234, 0.08);
+        }
+
+        .add-group-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .group-count-tip {
+            text-align: center;
             font-size: 12px;
-            color: #888;
-            margin-top: 5px;
+            color: #aaa;
+            margin-bottom: 20px;
+            margin-top: -12px;
         }
 
         .submit-btn {
@@ -134,7 +190,7 @@
 <body>
     <div class="container">
         <h1>📊 彩票号码管理</h1>
-        
+
         <div class="error-message" id="errorMessage"></div>
 
         <div class="lottery-type">
@@ -142,99 +198,160 @@
             <button class="lottery-btn" data-type="dlt">大乐透</button>
         </div>
 
-        <div class="number-groups" id="numberGroups">
-        </div>
+        <div class="number-groups" id="numberGroups"></div>
+
+        <button class="add-group-btn" id="addGroupBtn" onclick="addGroup()">＋ 添加一组</button>
+        <p class="group-count-tip" id="groupCountTip"></p>
 
         <button class="submit-btn" onclick="generatePage()">生成展示页面</button>
     </div>
 
     <script>
         let currentLotteryType = 'ssq';
+        let groupCount = 0;
+        const MAX_GROUPS = 10;
 
-        // 渲染 5 个长条输入框
-        function renderNumberInputs() {
+        function getTipText() {
+            return currentLotteryType === 'ssq'
+                ? '6 红 + 1 蓝，用空格 / 逗号 / 斜杠分隔'
+                : '5 前 + 2 后，用空格 / 逗号 / 斜杠分隔';
+        }
+
+        function updateAddBtn() {
+            const btn = document.getElementById('addGroupBtn');
+            const tip = document.getElementById('groupCountTip');
+            btn.disabled = groupCount >= MAX_GROUPS;
+            tip.textContent = `当前 ${groupCount} 组（最多 ${MAX_GROUPS} 组）`;
+        }
+
+        function addGroup() {
+            if (groupCount >= MAX_GROUPS) return;
+            groupCount++;
+
             const container = document.getElementById('numberGroups');
-            container.innerHTML = '';
+            const id = `group-${groupCount}`;
 
-            let tipText = currentLotteryType === 'ssq' 
-                ? '格式：6 红 + 1 蓝，用空格、逗号、斜杠分隔' 
-                : '格式：5 前 + 2 后，用空格、逗号、斜杠分隔';
+            const item = document.createElement('div');
+            item.className = 'group-item';
+            item.id = `item-${groupCount}`;
+            item.innerHTML = `
+                <div class="group-item-inner">
+                    <label class="group-label">第 ${groupCount} 组</label>
+                    <input type="text" class="group-input" id="${id}" placeholder="${getTipText()}">
+                </div>
+                <button class="delete-btn" onclick="removeGroup(${groupCount})" title="删除本组">×</button>
+            `;
+            container.appendChild(item);
+            updateAddBtn();
 
-            for (let i = 1; i <= 5; i++) {
-                const html = `
-                    <div class="group-item">
-                        <label class="group-label">第 ${i} 组</label>
-                        <input type="text" class="group-input" id="group-${i}" placeholder="${tipText}">
-                    </div>
-                `;
-                container.innerHTML += html;
-            }
+            // 新增后聚焦
+            document.getElementById(id).focus();
+        }
+
+        function removeGroup(index) {
+            const item = document.getElementById(`item-${index}`);
+            if (item) item.remove();
+            groupCount--;
+
+            // 重新给剩余组编号（label + input id）
+            renumberGroups();
+            updateAddBtn();
+        }
+
+        function renumberGroups() {
+            const items = document.querySelectorAll('.group-item');
+            groupCount = items.length;
+            items.forEach((item, i) => {
+                const num = i + 1;
+                const oldId = item.id; // item-X
+                item.id = `item-${num}`;
+
+                const label = item.querySelector('.group-label');
+                const input = item.querySelector('.group-input');
+                const deleteBtn = item.querySelector('.delete-btn');
+
+                label.textContent = `第 ${num} 组`;
+                input.id = `group-${num}`;
+                input.placeholder = getTipText();
+                deleteBtn.setAttribute('onclick', `removeGroup(${num})`);
+            });
         }
 
         // 切换彩票类型
         document.querySelectorAll('.lottery-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
+            btn.addEventListener('click', function () {
                 document.querySelectorAll('.lottery-btn').forEach(b => b.classList.remove('active'));
                 this.classList.add('active');
                 currentLotteryType = this.dataset.type;
-                renderNumberInputs();
+                // 更新所有 placeholder
+                document.querySelectorAll('.group-input').forEach(input => {
+                    input.placeholder = getTipText();
+                });
             });
         });
 
-        // 智能分割号码（支持空格 / 逗号 / 斜杠）
         function splitNumbers(str) {
             return str.trim()
-                .replace(/[,\s\/\-、]+/g, ',')  // 统一转成逗号
+                .replace(/[,\s\/\-、]+/g, ',')
                 .split(',')
                 .filter(n => n)
                 .map(n => parseInt(n))
                 .filter(n => !isNaN(n));
         }
 
-        // 生成页面
         function generatePage() {
             const errorMessage = document.getElementById('errorMessage');
             errorMessage.style.display = 'none';
 
-            const numbers = [];
-            const requiredCount = currentLotteryType === 'ssq' ? 7 : 7; // 都是 7 个
+            if (groupCount === 0) {
+                showError('请至少添加一组号码');
+                return;
+            }
 
-            for (let i = 1; i <= 5; i++) {
-                const val = document.getElementById(`group-${i}`).value.trim();
+            const numbers = [];
+            const requiredCount = 7;
+
+            const items = document.querySelectorAll('.group-item');
+            for (let i = 0; i < items.length; i++) {
+                const num = i + 1;
+                const input = items[i].querySelector('.group-input');
+                const val = input.value.trim();
+
                 if (!val) {
-                    showError(`第 ${i} 组不能为空`);
+                    showError(`第 ${num} 组不能为空`);
+                    input.focus();
                     return;
                 }
 
                 const nums = splitNumbers(val);
 
                 if (nums.length !== requiredCount) {
-                    showError(`第 ${i} 组必须输入 ${requiredCount} 个号码`);
+                    showError(`第 ${num} 组必须输入 ${requiredCount} 个号码`);
+                    input.focus();
                     return;
                 }
 
-                // 验证范围
                 if (currentLotteryType === 'ssq') {
                     for (let j = 0; j < 6; j++) {
                         if (nums[j] < 1 || nums[j] > 33) {
-                            showError(`第 ${i} 组红球必须在 1-33 之间`);
+                            showError(`第 ${num} 组红球必须在 1-33 之间`);
                             return;
                         }
                     }
                     if (nums[6] < 1 || nums[6] > 16) {
-                        showError(`第 ${i} 组蓝球必须在 1-16 之间`);
+                        showError(`第 ${num} 组蓝球必须在 1-16 之间`);
                         return;
                     }
                 } else {
                     for (let j = 0; j < 5; j++) {
                         if (nums[j] < 1 || nums[j] > 35) {
-                            showError(`第 ${i} 组前区必须在 1-35 之间`);
+                            showError(`第 ${num} 组前区必须在 1-35 之间`);
                             return;
                         }
                     }
                     for (let j = 5; j < 7; j++) {
                         if (nums[j] < 1 || nums[j] > 12) {
-                            showError(`第 ${i} 组后区必须在 1-12 之间`);
+                            showError(`第 ${num} 组后区必须在 1-12 之间`);
                             return;
                         }
                     }
@@ -251,9 +368,13 @@
             const errorMessage = document.getElementById('errorMessage');
             errorMessage.textContent = message;
             errorMessage.style.display = 'block';
+            errorMessage.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
 
-        renderNumberInputs();
+        // 默认初始 3 组
+        addGroup();
+        addGroup();
+        addGroup();
     </script>
 </body>
 </html>
