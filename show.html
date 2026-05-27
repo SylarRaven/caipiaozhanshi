@@ -55,7 +55,6 @@
             text-align: center;
         }
 
-        /* 标准容器（7个球） */
         .numbers-container {
             display: flex;
             justify-content: center;
@@ -65,12 +64,8 @@
             width: 100%;
         }
 
-        /* 紧凑容器（8个球，5+3） */
-        .numbers-container.compact {
-            gap: 4px;
-        }
+        .numbers-container.compact { gap: 4px; }
 
-        /* 标准球 */
         .number-ball {
             width: 50px;
             height: 50px;
@@ -86,12 +81,7 @@
             flex-shrink: 0;
         }
 
-        /* 紧凑球（8个球时缩小） */
-        .number-ball.small {
-            width: 48px;
-            height: 48px;
-            font-size: 24px;
-        }
+        .number-ball.small { width: 48px; height: 48px; font-size: 24px; }
 
         .number-ball.red {
             background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
@@ -109,10 +99,7 @@
             flex-shrink: 0;
         }
 
-        /* 紧凑分隔线 */
-        .separator.compact {
-            margin: 0 2px;
-        }
+        .separator.compact { margin: 0 2px; }
 
         .error-container { text-align: center; padding: 40px 20px; }
         .error-message { background: #fee; color: #c33; padding: 20px; border-radius: 10px; margin-bottom: 20px; }
@@ -161,15 +148,68 @@
 </div>
 
 <script>
+    // ── 共用编解码字典（与 index.html 完全一致） ─────────────────────────
+    const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    // SSQ:  6红球×6bits + 1蓝球×4bits = 40bits → 7个Base64字符/组
+    // DLT:  5前区×6bits + 3后区×4bits = 42bits → 7个Base64字符/组
+    //       （5+2时第3个后区为0，解码时0表示不存在）
+    const SSQ_BITS = [6,6,6,6,6,6, 5];  // 蓝球1-16需要5bits
+    const DLT_BITS = [6,6,6,6,6, 4,4,4];
+
+    function _unpack(str, bitLens) {
+        let bits = [...str].map(c => B64.indexOf(c).toString(2).padStart(6, '0')).join('');
+        let pos = 0;
+        return bitLens.map(len => { const v = parseInt(bits.slice(pos, pos + len), 2); pos += len; return v; });
+    }
+
+    function decodeGroups(type, data) {
+        const schema = type === 'ssq' ? SSQ_BITS : DLT_BITS;
+        const charsPerGroup = 7;  // 两种彩票每组均固定7字符
+        const groups = [];
+        for (let i = 0; i + charsPerGroup <= data.length; i += charsPerGroup) {
+            const values = _unpack(data.slice(i, i + charsPerGroup), schema);
+            if (type === 'dlt') {
+                // 最后一个后区为0 → 5+2；否则 → 5+3
+                groups.push(values[7] === 0 ? values.slice(0, 7) : values.slice(0, 8));
+            } else {
+                groups.push(values.slice(0, 7));
+            }
+        }
+        return groups;
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     let globalNumbers = null;
 
     function parseNumbers() {
         const params = new URLSearchParams(window.location.search);
-        const type = params.get('type');
-        const data = params.get('data');
-        if (!type || !data) { showError('无效的 URL 参数'); return null; }
-        const groups = data.split('|');
-        const numbers = groups.map(group => group.split(',').map(n => parseInt(n)));
+
+        // 新格式：?t=s|d&v=<encoded>
+        // 旧格式：?type=ssq|dlt&data=<raw>  （向下兼容）
+        let type, numbers;
+
+        if (params.has('t') && params.has('v')) {
+            // 新紧凑格式
+            const t = params.get('t');
+            type = t === 's' ? 'ssq' : t === 'd' ? 'dlt' : null;
+            if (!type) { showError('无效的彩票类型参数'); return null; }
+            const v = params.get('v');
+            if (!v || v.length % 7 !== 0) { showError('URL 数据格式错误'); return null; }
+            numbers = decodeGroups(type, v);
+            if (!numbers.length) { showError('无法解码号码数据'); return null; }
+
+        } else if (params.has('type') && params.has('data')) {
+            // 旧明文格式（向下兼容）
+            type = params.get('type');
+            if (type !== 'ssq' && type !== 'dlt') { showError('未知的彩票类型'); return null; }
+            const raw = params.get('data');
+            numbers = raw.split('|').map(g => g.split(',').map(n => parseInt(n)));
+
+        } else {
+            showError('无效的 URL 参数');
+            return null;
+        }
+
         globalNumbers = { type, numbers };
         return globalNumbers;
     }
@@ -195,13 +235,11 @@
             mainTitle.textContent = title;
             pageTitle.textContent = title;
             subtitle.textContent = '6 个红球 + 1 个蓝球';
-        } else if (type === 'dlt') {
+        } else {
             const title = `${month}月${date}日 ${weekDays[dayOfWeek]} 大乐透号码`;
             mainTitle.textContent = title;
             pageTitle.textContent = title;
             subtitle.textContent = '5 个前区 + 2~3 个后区';
-        } else {
-            showError('未知的彩票类型'); return;
         }
 
         pageTitle.onclick = copyAllNumbers;
@@ -216,14 +254,11 @@
             titleEl.textContent = `第 ${index + 1} 组`;
             groupDiv.appendChild(titleEl);
 
-            // 判断是否是 5+3（8个球）模式
             const isCompact = (type === 'dlt' && group.length === 8);
-
             const numbersContainer = document.createElement('div');
             numbersContainer.className = 'numbers-container' + (isCompact ? ' compact' : '');
 
             if (type === 'ssq') {
-                // 双色球：6红+1蓝，固定7个
                 for (let i = 0; i < 6; i++) {
                     const ball = createBall(group[i], 'red', false);
                     ball.style.animationDelay = `${i * 0.1}s`;
@@ -233,10 +268,7 @@
                 const blueBall = createBall(group[6], 'blue', false);
                 blueBall.style.animationDelay = '0.6s';
                 numbersContainer.appendChild(blueBall);
-
             } else {
-                // 大乐透：5前区 + 2或3后区
-                const backCount = group.length - 5; // 2 或 3
                 for (let i = 0; i < 5; i++) {
                     const ball = createBall(group[i], 'red', isCompact);
                     ball.style.animationDelay = `${i * 0.1}s`;
@@ -270,7 +302,7 @@
 
     function copyAllNumbers() {
         if (!globalNumbers || !globalNumbers.numbers) { showToast('暂无号码可复制'); return; }
-        let copyText = globalNumbers.numbers
+        const copyText = globalNumbers.numbers
             .map(group => group.map(n => n.toString().padStart(2, '0')).join(' '))
             .join('\n');
         navigator.clipboard.writeText(copyText).then(() => {
