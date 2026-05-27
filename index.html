@@ -106,9 +106,35 @@
 </div>
 
 <script>
+    // ── 共用编解码字典（与 show.html 完全一致） ──────────────────────────
+    const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
+    // SSQ:  6红球×6bits + 1蓝球×4bits = 40bits → 7个Base64字符
+    // DLT:  5前区×6bits + 3后区×4bits = 42bits → 7个Base64字符
+    //       （5+2时第3个后区填0，解码时0表示不存在）
+    const SSQ_BITS = [6,6,6,6,6,6, 5];  // 蓝球1-16需要5bits
+    const DLT_BITS = [6,6,6,6,6, 4,4,4];
+
+    function _pack(values, bitLens) {
+        let bits = '';
+        for (let i = 0; i < bitLens.length; i++)
+            bits += values[i].toString(2).padStart(bitLens[i], '0');
+        while (bits.length % 6) bits += '0';
+        return [...bits.match(/.{6}/g)].map(b => B64[parseInt(b, 2)]).join('');
+    }
+
+    function encodeGroups(type, groups) {
+        const schema = type === 'ssq' ? SSQ_BITS : DLT_BITS;
+        return groups.map(group => {
+            // DLT 5+2：末位补0占位，解码时0即表示无第3个后区
+            const values = (type === 'dlt' && group.length === 7) ? [...group, 0] : [...group];
+            return _pack(values, schema);
+        }).join('');   // 每组固定7字符，组间无需分隔符
+    }
+    // ─────────────────────────────────────────────────────────────────────
+
     let currentLotteryType = 'ssq';
     let groupCount = 0;
-    const MAX_GROUPS = 10;
+    const MAX_GROUPS = 20;
 
     function getTipText() {
         if (currentLotteryType === 'ssq') return '6 红 + 1 蓝，用空格 / 逗号 / 斜杠分隔';
@@ -186,7 +212,7 @@
 
         if (groupCount === 0) { showError('请至少添加一组号码'); return; }
 
-        const numbers = [];
+        const groups = [];
         const items = document.querySelectorAll('.group-item');
 
         for (let i = 0; i < items.length; i++) {
@@ -212,7 +238,6 @@
                     showError(`第 ${num} 组蓝球必须在 1-16 之间`); return;
                 }
             } else {
-                // 大乐透：5+2（共7个）或 5+3（共8个）
                 if (nums.length !== 7 && nums.length !== 8) {
                     showError(`第 ${num} 组必须输入 7 或 8 个号码（5 前区 + 2~3 后区）`);
                     input.focus(); return;
@@ -229,10 +254,12 @@
                 }
             }
 
-            numbers.push(nums.join(','));
+            groups.push(nums);
         }
 
-        window.location.href = `show.html?type=${currentLotteryType}&data=${encodeURIComponent(numbers.join('|'))}`;
+        // 编码并跳转，使用紧凑 URL
+        const encoded = encodeGroups(currentLotteryType, groups);
+        window.location.href = `show.html?t=${currentLotteryType === 'ssq' ? 's' : 'd'}&v=${encoded}`;
     }
 
     function showError(message) {
