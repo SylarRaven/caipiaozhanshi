@@ -66,6 +66,18 @@
 
         .numbers-container.compact { gap: 4px; }
 
+        .numbers-container.kl8-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            row-gap: 12px;
+            column-gap: 8px;
+            width: 100%;
+        }
+
+        .numbers-container.kl8-grid .number-ball {
+            margin: 0 auto;
+        }
+
         .number-ball {
             width: 50px;
             height: 50px;
@@ -135,6 +147,7 @@
             .number-group { padding: 15px; }
             .numbers-container { gap: 5px; }
             .numbers-container.compact { gap: 3px; }
+            .numbers-container.kl8-grid { column-gap: 5px; row-gap: 10px; }
         }
     </style>
 </head>
@@ -153,8 +166,23 @@
     // SSQ:  6红球×6bits + 1蓝球×4bits = 40bits → 7个Base64字符/组
     // DLT:  5前区×6bits + 3后区×4bits = 42bits → 7个Base64字符/组
     //       （5+2时第3个后区为0，解码时0表示不存在）
+    // KL8:  10红球×7bits = 70bits → 12个Base64字符/组
     const SSQ_BITS = [6,6,6,6,6,6, 5];  // 蓝球1-16需要5bits
     const DLT_BITS = [6,6,6,6,6, 4,4,4];
+    const KL8_BITS = [7,7,7,7,7,7,7,7,7,7];  // 红球1-80需要7bits
+
+    function getSchema(type) {
+        if (type === 'ssq') return SSQ_BITS;
+        if (type === 'dlt') return DLT_BITS;
+        if (type === 'kl8') return KL8_BITS;
+        return null;
+    }
+
+    function charsPerGroup(type) {
+        const schema = getSchema(type);
+        const bits = schema.reduce((a, b) => a + b, 0);
+        return Math.ceil(bits / 6);
+    }
 
     function _unpack(str, bitLens) {
         let bits = [...str].map(c => B64.indexOf(c).toString(2).padStart(6, '0')).join('');
@@ -163,16 +191,16 @@
     }
 
     function decodeGroups(type, data) {
-        const schema = type === 'ssq' ? SSQ_BITS : DLT_BITS;
-        const charsPerGroup = 7;  // 两种彩票每组均固定7字符
+        const schema = getSchema(type);
+        const groupChars = charsPerGroup(type);
         const groups = [];
-        for (let i = 0; i + charsPerGroup <= data.length; i += charsPerGroup) {
-            const values = _unpack(data.slice(i, i + charsPerGroup), schema);
+        for (let i = 0; i + groupChars <= data.length; i += groupChars) {
+            const values = _unpack(data.slice(i, i + groupChars), schema);
             if (type === 'dlt') {
                 // 最后一个后区为0 → 5+2；否则 → 5+3
                 groups.push(values[7] === 0 ? values.slice(0, 7) : values.slice(0, 8));
             } else {
-                groups.push(values.slice(0, 7));
+                groups.push(values);
             }
         }
         return groups;
@@ -191,17 +219,17 @@
         if (params.has('t') && params.has('v')) {
             // 新紧凑格式
             const t = params.get('t');
-            type = t === 's' ? 'ssq' : t === 'd' ? 'dlt' : null;
+            type = t === 's' ? 'ssq' : t === 'd' ? 'dlt' : t === 'k' ? 'kl8' : null;
             if (!type) { showError('无效的彩票类型参数'); return null; }
             const v = params.get('v');
-            if (!v || v.length % 7 !== 0) { showError('URL 数据格式错误'); return null; }
+            if (!v || v.length % charsPerGroup(type) !== 0) { showError('URL 数据格式错误'); return null; }
             numbers = decodeGroups(type, v);
             if (!numbers.length) { showError('无法解码号码数据'); return null; }
 
         } else if (params.has('type') && params.has('data')) {
             // 旧明文格式（向下兼容）
             type = params.get('type');
-            if (type !== 'ssq' && type !== 'dlt') { showError('未知的彩票类型'); return null; }
+            if (type !== 'ssq' && type !== 'dlt' && type !== 'kl8') { showError('未知的彩票类型'); return null; }
             const raw = params.get('data');
             numbers = raw.split('|').map(g => g.split(',').map(n => parseInt(n)));
 
@@ -235,11 +263,16 @@
             mainTitle.textContent = title;
             pageTitle.textContent = title;
             subtitle.textContent = '6 个红球 + 1 个蓝球';
-        } else {
+        } else if (type === 'dlt') {
             const title = `${month}月${date}日 ${weekDays[dayOfWeek]} 大乐透号码`;
             mainTitle.textContent = title;
             pageTitle.textContent = title;
             subtitle.textContent = '5 个前区 + 2~3 个后区';
+        } else {
+            const title = `${month}月${date}日 ${weekDays[dayOfWeek]} 快乐八号码`;
+            mainTitle.textContent = title;
+            pageTitle.textContent = title;
+            subtitle.textContent = '10 个红球';
         }
 
         pageTitle.onclick = copyAllNumbers;
@@ -257,6 +290,7 @@
             const isCompact = (type === 'dlt' && group.length === 8);
             const numbersContainer = document.createElement('div');
             numbersContainer.className = 'numbers-container' + (isCompact ? ' compact' : '');
+            if (type === 'kl8') numbersContainer.classList.add('kl8-grid');
 
             if (type === 'ssq') {
                 for (let i = 0; i < 6; i++) {
@@ -268,7 +302,7 @@
                 const blueBall = createBall(group[6], 'blue', false);
                 blueBall.style.animationDelay = '0.6s';
                 numbersContainer.appendChild(blueBall);
-            } else {
+            } else if (type === 'dlt') {
                 for (let i = 0; i < 5; i++) {
                     const ball = createBall(group[i], 'red', isCompact);
                     ball.style.animationDelay = `${i * 0.1}s`;
@@ -278,6 +312,13 @@
                 for (let i = 5; i < group.length; i++) {
                     const ball = createBall(group[i], 'blue', isCompact);
                     ball.style.animationDelay = `${i * 0.1}s`;
+                    numbersContainer.appendChild(ball);
+                }
+            } else {
+                // kl8：10 个红球，无蓝球分隔
+                for (let i = 0; i < group.length; i++) {
+                    const ball = createBall(group[i], 'red', true);
+                    ball.style.animationDelay = `${i * 0.06}s`;
                     numbersContainer.appendChild(ball);
                 }
             }
