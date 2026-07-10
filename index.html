@@ -95,6 +95,7 @@
     <div class="lottery-type">
         <button class="lottery-btn active" data-type="ssq">双色球</button>
         <button class="lottery-btn" data-type="dlt">大乐透</button>
+        <button class="lottery-btn" data-type="kl8">快乐八</button>
     </div>
 
     <div class="number-groups" id="numberGroups"></div>
@@ -108,11 +109,26 @@
 <script>
     // ── 共用编解码字典（与 show.html 完全一致） ──────────────────────────
     const B64 = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_';
-    // SSQ:  6红球×6bits + 1蓝球×4bits = 40bits → 7个Base64字符
-    // DLT:  5前区×6bits + 3后区×4bits = 42bits → 7个Base64字符
+    // SSQ:  6红球×6bits + 1蓝球×4bits = 40bits → 7个Base64字符/组
+    // DLT:  5前区×6bits + 3后区×4bits = 42bits → 7个Base64字符/组
     //       （5+2时第3个后区填0，解码时0表示不存在）
+    // KL8:  10红球×7bits = 70bits → 12个Base64字符/组
     const SSQ_BITS = [6,6,6,6,6,6, 5];  // 蓝球1-16需要5bits
     const DLT_BITS = [6,6,6,6,6, 4,4,4];
+    const KL8_BITS = [7,7,7,7,7,7,7,7,7,7];  // 红球1-80需要7bits
+
+    function getSchema(type) {
+        if (type === 'ssq') return SSQ_BITS;
+        if (type === 'dlt') return DLT_BITS;
+        if (type === 'kl8') return KL8_BITS;
+        return null;
+    }
+
+    function charsPerGroup(type) {
+        const schema = getSchema(type);
+        const bits = schema.reduce((a, b) => a + b, 0);
+        return Math.ceil(bits / 6);
+    }
 
     function _pack(values, bitLens) {
         let bits = '';
@@ -123,12 +139,12 @@
     }
 
     function encodeGroups(type, groups) {
-        const schema = type === 'ssq' ? SSQ_BITS : DLT_BITS;
+        const schema = getSchema(type);
         return groups.map(group => {
             // DLT 5+2：末位补0占位，解码时0即表示无第3个后区
             const values = (type === 'dlt' && group.length === 7) ? [...group, 0] : [...group];
             return _pack(values, schema);
-        }).join('');   // 每组固定7字符，组间无需分隔符
+        }).join('');   // 每组字符数固定（由 charsPerGroup 决定），组间无需分隔符
     }
     // ─────────────────────────────────────────────────────────────────────
 
@@ -138,7 +154,8 @@
 
     function getTipText() {
         if (currentLotteryType === 'ssq') return '6 红 + 1 蓝，用空格 / 逗号 / 斜杠分隔';
-        return '5 前 + 2~3 后，用空格 / 逗号 / 斜杠分隔';
+        if (currentLotteryType === 'dlt') return '5 前 + 2~3 后，用空格 / 逗号 / 斜杠分隔';
+        return '10 个号码（1-80），用空格 / 逗号 / 斜杠分隔';
     }
 
     function updateAddBtn() {
@@ -237,7 +254,7 @@
                 if (nums[6] < 1 || nums[6] > 16) {
                     showError(`第 ${num} 组蓝球必须在 1-16 之间`); return;
                 }
-            } else {
+            } else if (currentLotteryType === 'dlt') {
                 if (nums.length !== 7 && nums.length !== 8) {
                     showError(`第 ${num} 组必须输入 7 或 8 个号码（5 前区 + 2~3 后区）`);
                     input.focus(); return;
@@ -252,6 +269,16 @@
                         showError(`第 ${num} 组后区必须在 1-12 之间`); return;
                     }
                 }
+            } else if (currentLotteryType === 'kl8') {
+                if (nums.length !== 10) {
+                    showError(`第 ${num} 组必须输入 10 个号码`);
+                    input.focus(); return;
+                }
+                for (let j = 0; j < 10; j++) {
+                    if (nums[j] < 1 || nums[j] > 80) {
+                        showError(`第 ${num} 组号码必须在 1-80 之间`); return;
+                    }
+                }
             }
 
             groups.push(nums);
@@ -259,7 +286,8 @@
 
         // 编码并跳转，使用紧凑 URL
         const encoded = encodeGroups(currentLotteryType, groups);
-        window.location.href = `show.html?t=${currentLotteryType === 'ssq' ? 's' : 'd'}&v=${encoded}`;
+        const typeLetter = currentLotteryType === 'ssq' ? 's' : currentLotteryType === 'dlt' ? 'd' : 'k';
+        window.location.href = `show.html?t=${typeLetter}&v=${encoded}`;
     }
 
     function showError(message) {
