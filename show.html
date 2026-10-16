@@ -6,7 +6,7 @@
 <title id="mainTitle">号码展示</title>
 <style>
 :root{
-  --ball: clamp(36px, 8.6vw, 52px);
+  --ball: clamp(34px, 9.4vw, 56px);
   --gap: clamp(3px, 1.1vw, 8px);
   --cy:#22d3ee; --pk:#f43f5e; --vi:#8b5cf6;
   --mono: ui-monospace,'SF Mono','Cascadia Code',Consolas,'Courier New',monospace;
@@ -18,7 +18,6 @@ body{
   min-height:100vh;display:flex;justify-content:center;align-items:flex-start;
   padding:max(clamp(12px,3vw,40px),env(safe-area-inset-top)) clamp(10px,2.5vw,24px) max(16px,env(safe-area-inset-bottom));
   color:#dbe7ff;overflow-x:hidden;-webkit-font-smoothing:antialiased;
-  /* 纯静态背景：极光渐变 + 网格，零动画开销 */
   background:
     radial-gradient(900px 560px at 8% -10%,rgba(99,102,241,.40),transparent 62%),
     radial-gradient(760px 520px at 95% 6%,rgba(236,72,153,.26),transparent 62%),
@@ -41,20 +40,17 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
   overflow:hidden;
   animation:cardIn .7s cubic-bezier(.2,.9,.3,1) both;
 }
-/* 静态渐变描边 */
 .container::before{
   content:'';position:absolute;inset:0;border-radius:inherit;padding:1.5px;pointer-events:none;
   background:linear-gradient(135deg,rgba(34,211,238,.9),rgba(139,92,246,.35) 40%,rgba(244,63,94,.35) 60%,rgba(34,211,238,.9));
   -webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;
   mask:linear-gradient(#000 0 0) content-box exclude,linear-gradient(#000 0 0)}
 @keyframes cardIn{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:none}}
-/* HUD 四角 */
 .c{position:absolute;width:16px;height:16px;border:2px solid var(--cy);pointer-events:none;z-index:2;opacity:.9}
 .c.tl{top:10px;left:10px;border-right:0;border-bottom:0}
 .c.tr{top:10px;right:10px;border-left:0;border-bottom:0}
 .c.bl{bottom:10px;left:10px;border-right:0;border-top:0}
 .c.br{bottom:10px;right:10px;border-left:0;border-top:0}
-/* 扫描光束：只用 transform，走 GPU */
 .beam{position:absolute;left:0;right:0;top:0;height:90px;z-index:1;pointer-events:none;
   background:linear-gradient(180deg,transparent,rgba(34,211,238,.08),rgba(34,211,238,.22) 92%,transparent);
   transform:translateY(-100%);animation:beam 6s ease-in-out infinite;will-change:transform}
@@ -78,7 +74,7 @@ h1{
 
 .number-group{
   position:relative;text-align:center;overflow:hidden;
-  padding:clamp(14px,2.8vw,20px) clamp(10px,2.4vw,18px) clamp(16px,3vw,22px);
+  padding:clamp(14px,2.8vw,20px) clamp(8px,2vw,18px) clamp(16px,3vw,22px);
   margin-bottom:clamp(12px,2.4vw,16px);border-radius:clamp(14px,3vw,18px);
   background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.015));
   border:1px solid rgba(125,211,252,.16);
@@ -86,7 +82,6 @@ h1{
   animation:groupIn .6s cubic-bezier(.2,.9,.3,1) backwards;
 }
 .number-group:last-child{margin-bottom:0}
-/* 顶部静态光晕 */
 .number-group::before{content:'';position:absolute;top:-70%;left:50%;width:80%;height:130%;transform:translateX(-50%);pointer-events:none;
   background:radial-gradient(ellipse at center,rgba(34,211,238,.16),transparent 68%)}
 @keyframes groupIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:none}}
@@ -108,17 +103,16 @@ h1{
   --c:var(--pk);
   position:relative;width:var(--ball);height:var(--ball);border-radius:50%;
   display:flex;align-items:center;justify-content:center;flex-shrink:0;
-  font:800 calc(var(--ball)*.44)/1 var(--mono);letter-spacing:-.5px;color:#fff;font-variant-numeric:tabular-nums;
+  font:800 calc(var(--ball)*.48)/1 var(--mono);letter-spacing:-.5px;color:#fff;font-variant-numeric:tabular-nums;
   perspective:260px;
   animation:popIn .7s cubic-bezier(.18,1.4,.4,1) backwards;animation-delay:var(--d,0s)}
-.number-ball.small{width:calc(var(--ball)*.94);height:calc(var(--ball)*.94);font-size:calc(var(--ball)*.42)}
+.number-ball.small{width:calc(var(--ball)*.94);height:calc(var(--ball)*.94);font-size:calc(var(--ball)*.46)}
 .number-ball.red{--band:rgba(255,185,205,.50);
   background:radial-gradient(circle at 50% 45%,#f2527a 0%,#d91246 45%,#8e0934 80%,#3d0014 100%);
   box-shadow:0 10px 20px -8px rgba(255,45,99,.85),0 0 24px -6px rgba(255,45,99,.45)}
 .number-ball.blue{--band:rgba(185,245,255,.55);
   background:radial-gradient(circle at 50% 45%,#63d6f5 0%,#159ad8 45%,#0b5aa8 80%,#03204f 100%);
   box-shadow:0 10px 20px -8px rgba(34,211,238,.85),0 0 24px -6px rgba(34,211,238,.5)}
-/* 三维自转层：三条正交的立体色带，随机轴向翻滚 */
 .sphere{position:absolute;inset:0;transform-style:preserve-3d;
   animation:tumble var(--t,9s) linear infinite;animation-delay:var(--dl,0s);will-change:transform}
 .sphere i{position:absolute;inset:0;border-radius:50%;
@@ -126,13 +120,11 @@ h1{
 .sphere i:nth-child(2){transform:rotateY(90deg)}
 .sphere i:nth-child(3){transform:rotateX(90deg)}
 @keyframes tumble{to{transform:rotate3d(var(--rx,1),var(--ry,1),var(--rz,0),360deg)}}
-/* 固定光照层：高光、边缘暗角、底部反光，不随球转动，立体感来源 */
 .shade{position:absolute;inset:0;border-radius:50%;pointer-events:none;z-index:2;
   background:
     radial-gradient(circle at 31% 24%,rgba(255,255,255,.65) 0%,rgba(255,255,255,.18) 16%,transparent 32%),
     radial-gradient(circle at 50% 118%,rgba(255,255,255,.28),transparent 52%),
     radial-gradient(circle at 42% 38%,transparent 48%,rgba(0,0,0,.50) 100%)}
-/* 数字永远在最前面，且始终正对屏幕 */
 .number-ball > span{position:relative;z-index:3;text-shadow:0 1px 2px rgba(0,0,0,.9),0 0 6px rgba(0,0,0,.7),0 0 2px rgba(0,0,0,.9)}
 @keyframes popIn{0%{transform:scale(.2) rotate(-120deg);opacity:0}55%{transform:scale(1.14) rotate(6deg);opacity:1}80%{transform:scale(.97)}100%{transform:none;opacity:1}}
 
@@ -153,7 +145,11 @@ h1{
   background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4)}
 .error-message::before{content:'⚠';display:block;font-size:26px;margin-bottom:10px;color:#f87171}
 
-@media (max-width:480px){.container{padding:22px 12px 24px}.number-group{padding:14px 10px 16px}.separator{height:calc(var(--ball)*.58)}}
+@media (max-width:480px){
+  .container{padding:22px 12px 24px}
+  .number-group{padding:14px 8px 16px}
+  .separator{height:calc(var(--ball)*.58)}
+}
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 </style>
 </head>
@@ -225,7 +221,7 @@ function parseNumbers() {
     return globalNumbers;
 }
 
-/* 统一的数字滚动动画：整页只用一个 rAF 循环，全部完成后自动停止 */
+/* 数字滚动动画：整页只用一个 rAF 循环 */
 const rolls = [];
 let rolling = false;
 function roll(el, final, delay) {
@@ -245,6 +241,67 @@ function rollTick(t) {
 function typeWrite(el, text) {
     el.textContent = ''; let i = 0;
     const id = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(id); }, 70);
+}
+
+/* ── 核心：按容器实测宽度，把球撑到最大 ── */
+function fitBalls() {
+    const containers = document.querySelectorAll('.numbers-container');
+    containers.forEach(nc => {
+        const balls = nc.querySelectorAll('.number-ball');
+        if (!balls.length) return;
+
+        // 先清掉上一次的内联 --ball，还原到 :root 的兜底值再测量
+        nc.style.removeProperty('--ball');
+
+        const W = nc.clientWidth;
+        if (!W) return;
+
+        const cs = getComputedStyle(nc);
+        const gap = parseFloat(cs.columnGap) || 0;
+        let size;
+
+        if (nc.classList.contains('kl8-grid')) {
+            // 固定 5 列网格，每格宽度决定球径
+            const cell = (W - gap * 4) / 5;
+            size = cell - 3;
+        } else {
+            const nBall = balls.length;
+            const seps = nc.querySelectorAll('.separator');
+            const nElem = nBall + seps.length;
+
+            let sepW = 0;
+            if (seps.length) {
+                const ss = getComputedStyle(seps[0]);
+                // 分隔线本体 2px + 左右外边距
+                sepW = 2 + (parseFloat(ss.marginLeft) || 0) + (parseFloat(ss.marginRight) || 0);
+            }
+
+            const avail = W - gap * (nElem - 1) - sepW * seps.length;
+            size = avail / nBall;
+        }
+
+        // 下限保证可读，上限避免桌面上过大
+        size = Math.max(30, Math.min(size, 56));
+        nc.style.setProperty('--ball', size.toFixed(2) + 'px');
+    });
+}
+
+/* 卡片高度变化时同步扫描光束行程 */
+function syncBeam() {
+    const card = document.getElementById('card');
+    const beam = document.getElementById('beam');
+    if (card && beam) beam.style.setProperty('--bh', card.offsetHeight + 'px');
+}
+
+function layout() {
+    fitBalls();
+    syncBeam();
+}
+
+let resizeTimer = null;
+function onResize() {
+    if (resizeTimer) clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(layout, 120);
 }
 
 function renderNumbers() {
@@ -302,8 +359,8 @@ function renderNumbers() {
     });
     container.appendChild(frag);
 
-    // 扫描光束的行程 = 卡片高度
-    document.getElementById('beam').style.setProperty('--bh', document.getElementById('card').offsetHeight + 'px');
+    // 等一帧让布局稳定后再量宽度
+    requestAnimationFrame(layout);
 }
 
 function createBall(number, type, small, delay) {
@@ -373,6 +430,10 @@ function showError(message) {
     const f = () => { if (!document.hidden) el.textContent = new Date().toTimeString().slice(0, 8); };
     f(); setInterval(f, 1000);
 })();
+
+window.addEventListener('resize', onResize, { passive: true });
+window.addEventListener('orientationchange', onResize, { passive: true });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(layout);
 
 renderNumbers();
 </script>
