@@ -16,7 +16,12 @@ html{-webkit-text-size-adjust:100%}
 body{
   font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',Arial,sans-serif;
   min-height:100vh;display:flex;justify-content:center;align-items:flex-start;
-  padding:max(clamp(12px,3vw,40px),env(safe-area-inset-top)) clamp(10px,2.5vw,24px) max(16px,env(safe-area-inset-bottom));
+  /* 左右零间距；仅保留上下与安全区域 */
+  padding:
+    max(clamp(12px,3vw,40px), env(safe-area-inset-top))
+    max(0px, env(safe-area-inset-right))
+    max(16px, env(safe-area-inset-bottom))
+    max(0px, env(safe-area-inset-left));
   color:#dbe7ff;overflow-x:hidden;-webkit-font-smoothing:antialiased;
   background:
     radial-gradient(900px 560px at 8% -10%,rgba(99,102,241,.40),transparent 62%),
@@ -33,7 +38,8 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 
 .container{
   position:relative;z-index:1;width:100%;max-width:620px;
-  padding:clamp(20px,4vw,34px) clamp(12px,3vw,26px) clamp(20px,4vw,30px);
+  /* 左右 0 内边距，仅保留上下 */
+  padding:clamp(20px,4vw,34px) 0 clamp(20px,4vw,30px);
   border-radius:clamp(18px,3.4vw,26px);
   background:linear-gradient(168deg,rgba(16,22,48,.94),rgba(6,8,20,.96));
   box-shadow:0 30px 70px -30px #000,0 0 80px -40px rgba(34,211,238,.6),inset 0 1px 0 rgba(255,255,255,.12);
@@ -57,24 +63,25 @@ body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
 @keyframes beam{0%{transform:translateY(-100%);opacity:0}8%{opacity:1}55%{transform:translateY(var(--bh,600px));opacity:1}60%,100%{transform:translateY(var(--bh,600px));opacity:0}}
 #content{position:relative;z-index:3}
 
-.hud{display:flex;justify-content:space-between;align-items:center;font:600 10px var(--mono);letter-spacing:2px;color:#5eead4;opacity:.85;margin:-6px 6px 12px}
+.hud{display:flex;justify-content:space-between;align-items:center;font:600 10px var(--mono);letter-spacing:2px;color:#5eead4;opacity:.85;margin:-6px 12px 12px}
 .hud i{display:inline-block;width:6px;height:6px;border-radius:50%;background:#34d399;box-shadow:0 0 8px 1px #34d399;margin-right:6px;animation:blink 1.4s steps(2) infinite}
 @keyframes blink{50%{opacity:.35}}
 
 h1{
   text-align:center;font-size:clamp(19px,4.8vw,27px);font-weight:800;letter-spacing:.5px;line-height:1.35;
-  cursor:pointer;user-select:none;
+  cursor:pointer;user-select:none;padding:0 12px;
   background:linear-gradient(100deg,#fff 0%,#a5f3fc 25%,#c4b5fd 50%,#fda4af 72%,#fff 95%);background-size:250% 100%;
   -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;color:transparent;
   animation:shine 7s linear infinite}
 @keyframes shine{to{background-position:250% 50%}}
 
-.subtitle{text-align:center;font:500 clamp(11px,3vw,13px) var(--mono);letter-spacing:3px;color:#7dd3fc;margin:10px 0 clamp(18px,3.4vw,26px);min-height:1.4em}
+.subtitle{text-align:center;font:500 clamp(11px,3vw,13px) var(--mono);letter-spacing:3px;color:#7dd3fc;margin:10px 12px clamp(18px,3.4vw,26px);min-height:1.4em}
 .subtitle::after{content:'▌';margin-left:3px;color:var(--cy);animation:blink .9s steps(2) infinite}
 
 .number-group{
   position:relative;text-align:center;overflow:hidden;
-  padding:clamp(14px,2.8vw,20px) clamp(8px,2vw,18px) clamp(16px,3vw,22px);
+  /* 左右 0 内边距 */
+  padding:clamp(14px,2.8vw,20px) 0 clamp(16px,3vw,22px);
   margin-bottom:clamp(12px,2.4vw,16px);border-radius:clamp(14px,3vw,18px);
   background:linear-gradient(160deg,rgba(255,255,255,.07),rgba(255,255,255,.015));
   border:1px solid rgba(125,211,252,.16);
@@ -95,7 +102,7 @@ h1{
   clip-path:polygon(8px 0,100% 0,100% calc(100% - 8px),calc(100% - 8px) 100%,0 100%,0 8px)}
 .group-title::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--cy);box-shadow:0 0 6px 1px var(--cy)}
 
-.numbers-container{position:relative;z-index:1;display:flex;justify-content:center;align-items:center;flex-wrap:nowrap;gap:var(--gap);width:100%}
+.numbers-container{position:relative;z-index:1;display:flex;justify-content:center;align-items:center;flex-wrap:nowrap;gap:var(--gap);width:100%;padding:0}
 .numbers-container.compact{gap:calc(var(--gap)*.7)}
 .numbers-container.kl8-grid{display:grid;grid-template-columns:repeat(5,1fr);justify-items:center;row-gap:clamp(8px,2vw,14px);column-gap:var(--gap)}
 
@@ -107,7 +114,7 @@ h1{
   perspective:260px;
   animation:popIn .7s cubic-bezier(.18,1.4,.4,1) backwards;animation-delay:var(--d,0s)}
 .number-ball.small{width:calc(var(--ball)*.94);height:calc(var(--ball)*.94);font-size:calc(var(--ball)*.46)}
-/* 旋转色带：透明度大幅降低，只留隐约球面纹理 */
+/* 旋转色带透明度已调低，只留隐约球面纹理 */
 .number-ball.red{--band:rgba(255,185,205,.18);
   background:radial-gradient(circle at 50% 45%,#f2527a 0%,#d91246 45%,#8e0934 80%,#3d0014 100%);
   box-shadow:0 10px 20px -8px rgba(255,45,99,.85),0 0 24px -6px rgba(255,45,99,.45)}
@@ -133,7 +140,7 @@ h1{
   background:linear-gradient(to bottom,transparent,var(--cy),transparent)}
 .separator.compact{margin:0 calc(var(--gap)*.5)}
 
-.foot{position:relative;z-index:3;text-align:center;margin-top:16px;font:500 10px var(--mono);letter-spacing:2px;color:#64748b}
+.foot{position:relative;z-index:3;text-align:center;margin-top:16px;padding:0 12px;font:500 10px var(--mono);letter-spacing:2px;color:#64748b}
 
 .copy-toast{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);padding:14px 26px;border-radius:12px;
   font:600 15px var(--mono);color:#e6fffb;background:rgba(6,12,28,.96);
@@ -146,10 +153,15 @@ h1{
   background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.4)}
 .error-message::before{content:'⚠';display:block;font-size:26px;margin-bottom:10px;color:#f87171}
 
+/* 移动端：容器全宽时去掉左右圆角，避免球在边缘被裁切 */
 @media (max-width:480px){
-  .container{padding:22px 12px 24px}
-  .number-group{padding:14px 8px 16px}
+  .container{
+    padding:22px 0 24px;
+    border-radius:0;
+  }
+  .number-group{padding:14px 0 16px;border-radius:0}
   .separator{height:calc(var(--ball)*.58)}
+  .hud{margin:-6px 14px 12px}
 }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important}}
 </style>
@@ -243,7 +255,7 @@ function typeWrite(el, text) {
     const id = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(id); }, 70);
 }
 
-/* 按容器实测宽度，把球撑到最大 */
+/* 按容器实测宽度，把球撑到最大。现在左右无 padding，容器宽度就是可用宽度。 */
 function fitBalls() {
     const containers = document.querySelectorAll('.numbers-container');
     containers.forEach(nc => {
@@ -270,7 +282,8 @@ function fitBalls() {
             const avail = W - gap * (nElem - 1) - sepW * seps.length;
             size = avail / nBall;
         }
-        size = Math.max(30, Math.min(size, 56));
+        /* 上限放宽到 60px，全宽后可多拿一点 */
+        size = Math.max(30, Math.min(size, 60));
         nc.style.setProperty('--ball', size.toFixed(2) + 'px');
     });
 }
