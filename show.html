@@ -107,16 +107,17 @@ h1{
   perspective:260px;
   animation:popIn .7s cubic-bezier(.18,1.4,.4,1) backwards;animation-delay:var(--d,0s)}
 .number-ball.small{width:calc(var(--ball)*.94);height:calc(var(--ball)*.94);font-size:calc(var(--ball)*.46)}
-.number-ball.red{--band:rgba(255,185,205,.50);
+/* 旋转色带：透明度大幅降低，只留隐约球面纹理 */
+.number-ball.red{--band:rgba(255,185,205,.18);
   background:radial-gradient(circle at 50% 45%,#f2527a 0%,#d91246 45%,#8e0934 80%,#3d0014 100%);
   box-shadow:0 10px 20px -8px rgba(255,45,99,.85),0 0 24px -6px rgba(255,45,99,.45)}
-.number-ball.blue{--band:rgba(185,245,255,.55);
+.number-ball.blue{--band:rgba(185,245,255,.20);
   background:radial-gradient(circle at 50% 45%,#63d6f5 0%,#159ad8 45%,#0b5aa8 80%,#03204f 100%);
   box-shadow:0 10px 20px -8px rgba(34,211,238,.85),0 0 24px -6px rgba(34,211,238,.5)}
 .sphere{position:absolute;inset:0;transform-style:preserve-3d;
   animation:tumble var(--t,9s) linear infinite;animation-delay:var(--dl,0s);will-change:transform}
 .sphere i{position:absolute;inset:0;border-radius:50%;
-  border:.23em solid var(--band);box-shadow:inset 0 0 5px rgba(0,0,0,.35),0 0 5px rgba(0,0,0,.25)}
+  border:.23em solid var(--band);box-shadow:inset 0 0 5px rgba(0,0,0,.28),0 0 5px rgba(0,0,0,.18)}
 .sphere i:nth-child(2){transform:rotateY(90deg)}
 .sphere i:nth-child(3){transform:rotateX(90deg)}
 @keyframes tumble{to{transform:rotate3d(var(--rx,1),var(--ry,1),var(--rz,0),360deg)}}
@@ -221,7 +222,6 @@ function parseNumbers() {
     return globalNumbers;
 }
 
-/* 数字滚动动画：整页只用一个 rAF 循环 */
 const rolls = [];
 let rolling = false;
 function roll(el, final, delay) {
@@ -243,60 +243,45 @@ function typeWrite(el, text) {
     const id = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(id); }, 70);
 }
 
-/* ── 核心：按容器实测宽度，把球撑到最大 ── */
+/* 按容器实测宽度，把球撑到最大 */
 function fitBalls() {
     const containers = document.querySelectorAll('.numbers-container');
     containers.forEach(nc => {
         const balls = nc.querySelectorAll('.number-ball');
         if (!balls.length) return;
-
-        // 先清掉上一次的内联 --ball，还原到 :root 的兜底值再测量
         nc.style.removeProperty('--ball');
-
         const W = nc.clientWidth;
         if (!W) return;
-
         const cs = getComputedStyle(nc);
         const gap = parseFloat(cs.columnGap) || 0;
         let size;
-
         if (nc.classList.contains('kl8-grid')) {
-            // 固定 5 列网格，每格宽度决定球径
             const cell = (W - gap * 4) / 5;
             size = cell - 3;
         } else {
             const nBall = balls.length;
             const seps = nc.querySelectorAll('.separator');
             const nElem = nBall + seps.length;
-
             let sepW = 0;
             if (seps.length) {
                 const ss = getComputedStyle(seps[0]);
-                // 分隔线本体 2px + 左右外边距
                 sepW = 2 + (parseFloat(ss.marginLeft) || 0) + (parseFloat(ss.marginRight) || 0);
             }
-
             const avail = W - gap * (nElem - 1) - sepW * seps.length;
             size = avail / nBall;
         }
-
-        // 下限保证可读，上限避免桌面上过大
         size = Math.max(30, Math.min(size, 56));
         nc.style.setProperty('--ball', size.toFixed(2) + 'px');
     });
 }
 
-/* 卡片高度变化时同步扫描光束行程 */
 function syncBeam() {
     const card = document.getElementById('card');
     const beam = document.getElementById('beam');
     if (card && beam) beam.style.setProperty('--bh', card.offsetHeight + 'px');
 }
 
-function layout() {
-    fitBalls();
-    syncBeam();
-}
+function layout() { fitBalls(); syncBeam(); }
 
 let resizeTimer = null;
 function onResize() {
@@ -359,7 +344,6 @@ function renderNumbers() {
     });
     container.appendChild(frag);
 
-    // 等一帧让布局稳定后再量宽度
     requestAnimationFrame(layout);
 }
 
@@ -424,7 +408,6 @@ function showError(message) {
     document.getElementById('content').innerHTML = `<div class="error-container"><div class="error-message">${message}</div></div>`;
 }
 
-/* 时钟：页面隐藏时暂停 */
 (function clock() {
     const el = document.getElementById('clock');
     const f = () => { if (!document.hidden) el.textContent = new Date().toTimeString().slice(0, 8); };
