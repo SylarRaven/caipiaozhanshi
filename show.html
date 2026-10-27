@@ -245,7 +245,8 @@ function rollTick(t) {
         const r = rolls[i];
         if (t < r.start) continue;
         if (t - r.start >= r.dur) { r.el.textContent = r.final; rolls.splice(i, 1); }
-        else r.el.textContent = String(Math.floor(Math.random() * 100)).padStart(2, '0');
+        //else r.el.textContent = String(Math.floor(Math.random() * 100)).padStart(2, '0');
+        else r.el.textContent = String(Math.floor(Math.random() * 100));
     }
     if (rolls.length) requestAnimationFrame(rollTick); else rolling = false;
 }
@@ -378,9 +379,11 @@ function createBall(number, type, small, delay) {
     ball.appendChild(shade);
 
     const span = document.createElement('span');
-    span.textContent = '00';
+    //span.textContent = '00';
+    span.textContent = String(number);
     ball.appendChild(span);
-    roll(span, number.toString().padStart(2, '0'), delay * 1000 + 200);
+    //roll(span, number.toString().padStart(2, '0'), delay * 1000 + 200);
+    roll(span, String(number), delay * 1000 + 200);
     return ball;
 }
 
