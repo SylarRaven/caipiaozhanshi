@@ -247,11 +247,11 @@
                     input.focus(); return;
                 }
                 for (let j = 0; j < 6; j++) {
-                    if (nums[j] < 1 || nums[j] > 33) {
+                    if (nums[j] < 0 || nums[j] > 33) {
                         showError(`第 ${num} 组红球必须在 1-33 之间`); return;
                     }
                 }
-                if (nums[6] < 1 || nums[6] > 16) {
+                if (nums[6] < 0 || nums[6] > 16) {
                     showError(`第 ${num} 组蓝球必须在 1-16 之间`); return;
                 }
             } else if (currentLotteryType === 'dlt') {
