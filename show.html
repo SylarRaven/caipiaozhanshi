@@ -387,7 +387,8 @@ function createBall(number, type, small, delay) {
     //span.textContent = '00';
     span.textContent = String(number);
     ball.appendChild(span);
-    roll(span, PAD_ROLL ? String(number), delay * 1000 + 200 : number.toString().padStart(2, '0'));
+
+    roll(span, PAD_ROLL ? String(number) : String(number).padStart(2, '0'), delay * 1000 + 200);
     return ball;
 }
 
