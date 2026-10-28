@@ -240,13 +240,18 @@ function roll(el, final, delay) {
     rolls.push({ el, final, start: performance.now() + delay, dur: 600 + Math.random() * 400 });
     if (!rolling) { rolling = true; requestAnimationFrame(rollTick); }
 }
+// 放在 rollTick 外面，脚本顶层（比如 rolls 声明附近）
+const PAD_ROLL = new URLSearchParams(location.search).get('t') === 's';
+
 function rollTick(t) {
     for (let i = rolls.length - 1; i >= 0; i--) {
         const r = rolls[i];
         if (t < r.start) continue;
         if (t - r.start >= r.dur) { r.el.textContent = r.final; rolls.splice(i, 1); }
-        //else r.el.textContent = String(Math.floor(Math.random() * 100)).padStart(2, '0');
-        else r.el.textContent = String(Math.floor(Math.random() * 100));
+        else {
+            const n = String(Math.floor(Math.random() * 100));
+            r.el.textContent = PAD_ROLL ? n.padStart(2, '0') : n;
+        }
     }
     if (rolls.length) requestAnimationFrame(rollTick); else rolling = false;
 }
@@ -382,8 +387,7 @@ function createBall(number, type, small, delay) {
     //span.textContent = '00';
     span.textContent = String(number);
     ball.appendChild(span);
-    //roll(span, number.toString().padStart(2, '0'), delay * 1000 + 200);
-    roll(span, String(number), delay * 1000 + 200);
+    roll(span, PAD_ROLL ? number.toString().padStart(2, '0') : String(number), delay * 1000 + 200);
     return ball;
 }
 
